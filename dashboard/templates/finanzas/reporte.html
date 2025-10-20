@@ -1,0 +1,19 @@
+<h1>Generar Reporte</h1>
+<form method="POST">
+  {% csrf_token %}
+  <label>Periodo inicio:</label>
+  <select name="inicio">
+    {% for p in periodos %}
+      <option>{{ p }}</option>
+    {% endfor %}
+  </select>
+
+  <label>Periodo fin:</label>
+  <select name="fin">
+    {% for p in periodos %}
+      <option>{{ p }}</option>
+    {% endfor %}
+  </select>
+
+  <button type="submit">Descargar Reporte Excel</button>
+</form>

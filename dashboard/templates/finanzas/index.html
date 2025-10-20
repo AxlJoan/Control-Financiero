@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Panel Financiero</title>
+<style>
+  body {
+    font-family: "Segoe UI", sans-serif;
+    background-color: #f9fafc;
+    margin: 20px;
+    color: #333;
+  }
+  h1, h2 {
+    color: #1e3a8a;
+  }
+  form {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+  }
+  select, input {
+    padding: 5px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    margin-right: 10px;
+  }
+  button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #1d4ed8;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  th, td {
+    padding: 6px 8px;
+    text-align: right;
+    border-bottom: 1px solid #ddd;
+  }
+  th {
+    background: #f1f5f9;
+    text-align: center;
+  }
+  tr:hover {
+    background-color: #f9fafb;
+  }
+  .toggle {
+    color: #2563eb;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-left: 8px;
+  }
+</style>
+<script>
+function toggleNuevoPeriodo() {
+  const campo = document.getElementById("nuevo-periodo");
+  campo.style.display = campo.style.display === "none" ? "block" : "none";
+  campo.querySelector("input").value = "";
+}
+</script>
+</head>
+<body>
+
+<h1>📊 Panel de Ingresos</h1>
+
+<!-- FORMULARIO PARA AÑADIR MOVIMIENTOS -->
+<form method="POST">
+  {% csrf_token %}
+  <p>{{ form.periodo.label_tag }} {{ form.periodo }}</p>
+  <p class="toggle" onclick="toggleNuevoPeriodo()">➕ Nuevo periodo</p>
+  <div id="nuevo-periodo" style="display:none;">
+    <p>{{ form.nuevo_periodo.label_tag }} {{ form.nuevo_periodo }}</p>
+  </div>
+  <p>{{ form.columna.label_tag }} {{ form.columna }}</p>
+  <p>{{ form.monto.label_tag }} {{ form.monto }}</p>
+  <button type="submit" name="añadir">Añadir</button>
+</form>
+
+<p style="color:green;">{{ mensaje }}</p>
+
+<!-- FORMULARIO PARA GENERAR REPORTE -->
+<h2>📁 Generar Reporte Excel</h2>
+<form method="POST">
+  {% csrf_token %}
+  <label>Periodo inicio:</label>
+  <select name="inicio" required>
+    {% for p in periodos %}
+      <option>{{ p }}</option>
+    {% endfor %}
+  </select>
+
+  <label>Periodo fin:</label>
+  <select name="fin" required>
+    {% for p in periodos %}
+      <option>{{ p }}</option>
+    {% endfor %}
+  </select>
+
+  <button type="submit" name="generar_reporte">📥 Descargar Reporte</button>
+</form>
+
+<!-- TABLA DE REGISTROS -->
+<h2>📅 Registros Actuales</h2>
+<table>
+  <tr>
+    <th>Periodo</th>
+    <th>Ingresos x Mant.</th>
+    <th>DPPP</th>
+    <th>Netos Mant.</th>
+    <th>Cuota Extra.</th>
+    <th>Cuota Retro.</th>
+    <th>Revisión CSAU</th>
+    <th>Garantía Obra</th>
+    <th>Int. Cuotas</th>
+    <th>Rend. Inv.</th>
+    <th>Sanciones</th>
+    <th>Seguros</th>
+    <th>Cobranza</th>
+    <th>No Identif.</th>
+    <th>Total</th>
+    <th>Reales vs Fact</th>
+    <th>Diferencia</th>
+    <th>Observaciones</th>
+  </tr>
+
+  {% for r in registros %}
+  <tr>
+    <td style="text-align:center;">{{ r.periodo }}</td>
+    <td>{{ r.ingresos_mantenimiento }}</td>
+    <td>{{ r.dppp }}</td>
+    <td>{{ r.ingresos_netos_mantenimiento }}</td>
+    <td>{{ r.ingresos_cuota_extraordinaria }}</td>
+    <td>{{ r.cuota_ordinaria_retroactiva }}</td>
+    <td>{{ r.revision_csau }}</td>
+    <td>{{ r.depositos_garantia_obra }}</td>
+    <td>{{ r.ingresos_intereses_cuotas }}</td>
+    <td>{{ r.ingresos_rendimiento_inversiones }}</td>
+    <td>{{ r.sanciones }}</td>
+    <td>{{ r.recuperacion_seguro_danios }}</td>
+    <td>{{ r.recuperacion_gastos_cobranza }}</td>
+    <td>{{ r.depositos_no_identificados }}</td>
+    <td>{{ r.total }}</td>
+    <td>{{ r.ingresos_reales_vs_fact }}</td>
+    <td>{{ r.diferencia_ingresos_fac_vs_cobrados }}</td>
+    <td style="text-align:left;">{{ r.observaciones }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+</body>
+</html>
