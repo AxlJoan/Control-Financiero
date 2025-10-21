@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Historial de Movimientos</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root {
+  --color-azul: #2563eb;
+  --color-azul-oscuro: #1e3a8a;
+  --color-fondo: #f9fafc;
+  --color-texto: #333;
+  --color-fondo-oscuro: #111827;
+  --color-card-oscuro: #1f2937;
+  --color-texto-oscuro: #e5e7eb;
+  --color-hover: #1e40af;
+}
+
+body {
+  font-family: "Segoe UI", sans-serif;
+  background-color: #f9fafc;
+  margin: 0;
+  padding: 0 30px;
+  color: #333;
+  transition: background 0.3s, color 0.3s;
+}
+h1, h2 {
+  color: #2563eb;
+  margin-bottom: 10px;
+}
+.dark-mode h1, h2 {
+  color: #93c5fd;
+  margin-bottom: 10px;
+}
+/* --------- MENÚ SUPERIOR --------- */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 15px 25px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  border-radius: 0 0 10px 10px;
+  margin-bottom: 25px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+.nav-links a {
+  color: #2563eb;
+  font-weight: 500;
+  text-decoration: none;
+  position: relative;
+  transition: color 0.3s;
+}
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 0%;
+  height: 2px;
+  background: #2563eb;
+  transition: width 0.3s;
+}
+.nav-links a:hover {
+  color: #1e40af;
+}
+.nav-links a:hover::after {
+  width: 100%;
+}
+.nav-links .sidebar-toggle {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+  font-size: 1rem;
+  transition: color 0.3s;
+}
+
+.nav-links .sidebar-toggle::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 0%;
+  height: 2px;
+  background: #2563eb;
+  transition: width 0.3s;
+}
+
+.nav-links .sidebar-toggle:hover {
+  color: #1e40af;
+}
+
+.nav-links .sidebar-toggle:hover::after {
+  width: 100%;
+}
+
+.dark-mode .navbar {
+  background: #1f2937;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.dark-mode .nav-links a {
+  color: #93c5fd;
+}
+.dark-mode .nav-links .sidebar-toggle {
+  color: #93c5fd;
+}
+
+.dark-mode .nav-links .sidebar-toggle:hover {
+  color: #bfdbfe;
+}
+
+.dark-mode .nav-links .sidebar-toggle::after {
+  background: #93c5fd;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 250px;
+  background: var(--color-azul-oscuro);
+  color: white;
+  position: fixed;
+  top: 0;
+  left: -250px;
+  height: 100vh;
+  padding-top: 60px;
+  transition: left 0.3s ease;
+  z-index: 100;
+}
+.sidebar.active { left: 0; }
+.sidebar h2 { text-align: center; margin-bottom: 20px; font-size: 1.3em; }
+.sidebar ul { list-style: none; padding: 0; }
+.sidebar ul li { padding: 12px 20px; }
+.sidebar ul li a { color: white; text-decoration: none; display: flex; align-items: center; gap: 12px; border-radius: 6px; transition: background 0.3s; }
+.sidebar ul li a:hover { background: var(--color-azul); }
+
+/* MAIN CONTENT */
+.main-content {
+  margin: 25px;
+  transition: margin-left 0.3s ease;
+}
+.main-content.shifted { margin-left: 250px; }
+.table-container {
+  max-height: 70vh;
+  overflow-y: auto;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px; text-align: center; border-bottom: 1px solid #ddd; }
+th { background: #f1f5f9; position: sticky; top: 0; z-index: 2; }
+td:first-child, th:first-child { text-align: left; } .dark-mode tr:hover {
+  background-color: #374151; 
+}
+/* Botón de acción en modo claro */
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #dc2626; /* texto en rojo */
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.action-btn i {
+  color: #dc2626; /* icono también rojo en modo claro */
+  transition: color 0.2s;
+}
+
+/* Hover en modo claro */
+.action-btn:hover {
+  color: #991b1b; /* texto al pasar el mouse */
+}
+.action-btn:hover i {
+  color: #991b1b; /* icono al pasar el mouse */
+}
+
+/* Modo oscuro */
+.dark-mode .action-btn {
+  color: #f87171; /* texto "Eliminar" en tono más claro */
+}
+
+.dark-mode .action-btn i {
+  color: #f87171; /* icono también cambia */
+}
+
+/* Hover modo oscuro */
+.dark-mode .action-btn:hover {
+  color: #fca5a5; /* texto al pasar el mouse */
+}
+
+.dark-mode .action-btn:hover i {
+  color: #fca5a5; /* icono al pasar el mouse */
+}
+
+/* BOTÓN DE ACCIÓN */
+.action-btn { background: none; border: none; cursor: pointer; }
+.action-btn i { transition: color 0.2s; }
+.action-btn:hover i { color: #f87171; }
+
+/* MODO OSCURO GENERAL */
+.dark-mode { background: var(--color-fondo-oscuro); color: var(--color-texto-oscuro); }
+.dark-mode .sidebar {
+  background: #1f2937;
+  color: var(--color-texto-oscuro);
+  box-shadow: 2px 0 8px rgba(0,0,0,0.5);
+}
+.dark-mode .sidebar ul li a { color: var(--color-texto-oscuro); }
+.dark-mode .sidebar ul li a:hover { background: #4f46e5; }
+.dark-mode .table-container { background: var(--color-card-oscuro); border-color: #374151; }
+.dark-mode th { background: #374151; color: var(--color-texto-oscuro); }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <h1><i class="fa-solid fa-chart-line"></i> Panel Financiero</h1>
+  <div class="nav-links">
+    <a href="{% url 'index' %}"><i class="fa-solid fa-clock-rotate-left"></i> Panel Financiero</a>
+    <a href="#" onclick="toggleDarkMode()"><i class="fas fa-moon"></i> Modo Oscuro</a>
+    <!-- Botón del sidebar -->
+    <button class="sidebar-toggle" id="btnSidebar" style="display:flex; align-items:center; gap:6px;">
+      <i class="fas fa-bars"></i> Menú
+    </button>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <h2>Opciones</h2>
+  <ul>
+    <li><a href="#"><i class="fas fa-user"></i> Perfil</a></li>
+    <li><a href="#"><i class="fas fa-cog"></i> Configuración</a></li>
+    <li><a href="#"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>
+  </ul>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content" id="content">
+    <div class="table-container">
+    <table>
+      <tr>
+        <th>Fecha</th>
+        <th>Tipo</th>
+        <th>Periodo</th>
+        <th>Columna</th>
+        <th>Monto</th>
+        <th>Observaciones</th>
+        <th>Acción</th>
+      </tr>
+      {% for mov in movimientos %}
+      <tr>
+        <td>{{ mov.fecha|date:"Y-m-d H:i" }}</td>
+        <td>{{ mov.tipo|capfirst }}</td>
+        <td>{{ mov.periodo }}</td>
+        <td>{{ mov.columna }}</td>
+        <td>{{ mov.monto|default:"-" }}</td>
+        <td style="text-align:left;">{{ mov.observaciones }}</td>
+        <td>
+          <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="id_mov" value="{{ mov.id }}">
+            <button type="submit" name="eliminar_mov" class="action-btn" onclick="return confirm('¿Eliminar este registro?')">
+              <i class="fas fa-trash-alt"></i> Eliminar
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7">No hay movimientos registrados.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+<script>
+// Toggle sidebar
+const sidebar = document.getElementById("sidebar");
+const content = document.getElementById("content");
+const btnSidebar = document.getElementById("btnSidebar");
+
+btnSidebar.addEventListener("click", () => {
+  sidebar.classList.toggle("active");
+  content.classList.toggle("shifted");
+});
+
+// Cerrar sidebar al click fuera
+document.addEventListener("click", (e) => {
+  if (!sidebar.contains(e.target) && !btnSidebar.contains(e.target) && sidebar.classList.contains("active")) {
+    sidebar.classList.remove("active");
+    content.classList.remove("shifted");
+  }
+});
+
+// Cerrar con Esc
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && sidebar.classList.contains("active")) {
+    sidebar.classList.remove("active");
+    content.classList.remove("shifted");
+  }
+});
+
+// Persistencia modo oscuro
+document.addEventListener("DOMContentLoaded", () => {
+  const body = document.body;
+  if (localStorage.getItem("darkMode") === "true") body.classList.add("dark-mode");
+});
+
+function toggleDarkMode() {
+  const body = document.body;
+  const isDark = body.classList.toggle("dark-mode");
+  localStorage.setItem("darkMode", isDark);
+}
+</script>
+
+</body>
+</html>

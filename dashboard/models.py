@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 class IngresoMensual(models.Model):
     periodo = models.CharField(max_length=10)  # Ej: "Jan-25"
@@ -21,7 +22,7 @@ class IngresoMensual(models.Model):
 
     def total(self):
         campos = [
-            self.ingresos_mantenimiento, self.dppp, self.ingresos_netos_mantenimiento,
+            self.ingresos_netos_mantenimiento,
             self.ingresos_cuota_extraordinaria, self.cuota_ordinaria_retroactiva,
             self.revision_csau, self.depositos_garantia_obra,
             self.ingresos_intereses_cuotas, self.ingresos_rendimiento_inversiones,
@@ -37,3 +38,14 @@ class IngresoMensual(models.Model):
 
     def __str__(self):
         return self.periodo
+
+class MovimientoLog(models.Model):
+    fecha = models.DateTimeField(default=timezone.now)
+    tipo = models.CharField(max_length=20)  # "añadir", "editar", "eliminar"
+    periodo = models.CharField(max_length=20, null=True, blank=True)
+    columna = models.CharField(max_length=50, null=True, blank=True)
+    monto = models.FloatField(null=True, blank=True)
+    observaciones = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.fecha:%Y-%m-%d %H:%M} - {self.tipo} ({self.columna})"
