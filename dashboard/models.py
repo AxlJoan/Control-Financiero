@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 class IngresoMensual(models.Model):
     periodo = models.CharField(max_length=10)  # Ej: "Jan-25"
@@ -19,7 +20,8 @@ class IngresoMensual(models.Model):
     ingresos_reales_vs_fact = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     diferencia_ingresos_fac_vs_cobrados = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     observaciones = models.TextField(blank=True, null=True)
-
+    
+    @property
     def total(self):
         campos = [
             self.ingresos_netos_mantenimiento,
@@ -32,20 +34,34 @@ class IngresoMensual(models.Model):
         return sum(campos)
 
     def save(self, *args, **kwargs):
-        # Calcular diferencia automáticamente
-        self.diferencia_ingresos_fac_vs_cobrados = self.total() - self.ingresos_reales_vs_fact
+        self.ingresos_netos_mantenimiento = (self.ingresos_mantenimiento or 0) - (self.dppp or 0)
+        self.diferencia_ingresos_fac_vs_cobrados = self.total - self.ingresos_reales_vs_fact
         super().save(*args, **kwargs)
+
 
     def __str__(self):
         return self.periodo
 
 class MovimientoLog(models.Model):
     fecha = models.DateTimeField(default=timezone.now)
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     tipo = models.CharField(max_length=20)  # "añadir", "editar", "eliminar"
     periodo = models.CharField(max_length=20, null=True, blank=True)
     columna = models.CharField(max_length=50, null=True, blank=True)
-    monto = models.FloatField(null=True, blank=True)
+    monto = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     observaciones = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.fecha:%Y-%m-%d %H:%M} - {self.tipo} ({self.columna})"
+
+class SystemLog(models.Model):
+    fecha = models.DateTimeField(auto_now_add=True)
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    accion = models.CharField(max_length=200)
+    detalle = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-fecha"]
+
+    def __str__(self):
+        return f"[{self.fecha:%Y-%m-%d %H:%M}] {self.usuario} - {self.accion}"

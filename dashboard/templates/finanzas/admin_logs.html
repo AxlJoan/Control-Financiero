@@ -1,0 +1,51 @@
+{% extends "finanzas/base.html" %}
+{% load static %}
+{% block content %}
+<h1><i class="fa-solid fa-clipboard-list"></i> Registros del Sistema</h1>
+
+<form method="get" class="filter-form">
+  <input type="text" name="usuario" value="{{ usuario_filtro }}" placeholder="Filtrar por usuario">
+  <button type="submit"><i class="fas fa-search"></i> Buscar</button>
+</form>
+
+<table class="logs-table">
+  <thead>
+    <tr>
+      <th>Fecha</th>
+      <th>Usuario</th>
+      <th>Tipo</th>
+      <th>Periodo / Detalle</th>
+      <th>Columna</th>
+      <th>Monto</th>
+    </tr>
+  </thead>
+  <tbody>
+    {# Mostramos SystemLog primero #}
+    {% for log in logs %}
+    <tr>
+      <td>{{ log.fecha|date:"Y-m-d H:i" }}</td>
+      <td>{% if log.usuario %}{{ log.usuario.username }}{% else %}Sistema{% endif %}</td>
+      <td>Acción administrativa</td>
+      <td colspan="3">{{ log.accion }}{% if log.detalle %}: {{ log.detalle }}{% endif %}</td>
+    </tr>
+    {% endfor %}
+
+    {# Mostramos MovimientoLog después #}
+    {% for mov in movimientos %}
+    <tr>
+      <td>{{ mov.fecha|date:"Y-m-d H:i" }}</td>
+      <td>{% if mov.usuario %}{{ mov.usuario.username }}{% else %}Sistema{% endif %}</td>
+      <td>{{ mov.tipo|capfirst }}</td>
+      <td>{{ mov.periodo }}{% if mov.observaciones %}: {{ mov.observaciones }}{% endif %}</td>
+      <td>{{ mov.columna|default:"-" }}</td>
+      <td>{{ mov.monto|default:"-" }}</td>
+    </tr>
+    {% endfor %}
+
+    {% if not logs and not movimientos %}
+    <tr><td colspan="6">No hay registros disponibles.</td></tr>
+    {% endif %}
+  </tbody>
+</table>
+
+{% endblock %}

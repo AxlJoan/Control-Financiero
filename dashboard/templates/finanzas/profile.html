@@ -1,0 +1,43 @@
+{% extends "finanzas/base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="profile-container">
+  <h2><i class="fas fa-user-circle"></i> Perfil de Usuario</h2>
+
+  {% if messages %}
+  <div class="messages">
+    {% for message in messages %}
+    <p class="alert alert-success">{{ message }}</p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="profile-forms">
+    <!-- 🔹 ACTUALIZAR INFORMACIÓN -->
+    <form method="POST" class="profile-form card">
+      {% csrf_token %}
+      <h3><i class="fas fa-envelope"></i> Actualizar información</h3>
+      <div class="form-fields">
+        {{ profile_form.as_p }}
+      </div>
+      <button type="submit" name="update_profile" class="btn btn-primary">
+        <i class="fas fa-save"></i> Guardar cambios
+      </button>
+    </form>
+
+    <!-- 🔹 CAMBIAR CONTRASEÑA -->
+    <form method="POST" class="password-form card">
+      {% csrf_token %}
+      <h3><i class="fas fa-lock"></i> Cambiar contraseña</h3>
+      <div class="form-fields">
+        {{ password_form.as_p }}
+      </div>
+      <button type="submit" name="change_password" class="btn btn-warning">
+        <i class="fas fa-key"></i> Cambiar contraseña
+      </button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

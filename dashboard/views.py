@@ -4,16 +4,44 @@ from io import BytesIO
 from decimal import Decimal
 from openpyxl import Workbook
 from datetime import datetime
+from django.conf import settings
 from .forms import MovimientoForm
 from django.contrib import messages
 from django.http import HttpResponse
+from django.core.mail import send_mail
+from django.contrib.auth.models import User
 from django.forms.models import model_to_dict
-from .models import IngresoMensual, MovimientoLog
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import authenticate, login, logout
+from .models import IngresoMensual, MovimientoLog, SystemLog
 from django.shortcuts import render, redirect, get_object_or_404
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from django.contrib.auth.decorators import login_required, user_passes_test
+from .forms import CustomUserCreationForm, CustomLoginForm, ProfileUpdateForm
 
 # --- CONSULTAR REGISTROS Y ORDENAR CORRECTAMENTE ---
 registros = list(IngresoMensual.objects.all().values())
+
+# --- LOGIN ---
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('index')
+
+    form = CustomLoginForm(request, data=request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        user = form.get_user()
+        login(request, user)
+        return redirect('index')
+
+    return render(request, "finanzas/login.html", {"form": form})
+
+# --- LOGOUT ---
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect('login')
 
 def index(request):
     form = MovimientoForm(request.POST or None)
@@ -30,14 +58,11 @@ def index(request):
         ingreso, _ = IngresoMensual.objects.get_or_create(periodo=periodo_final)
         valor_actual = getattr(ingreso, columna, 0) or 0
         setattr(ingreso, columna, valor_actual + monto)
-
-        ingreso.ingresos_netos_mantenimiento = (
-            (ingreso.ingresos_mantenimiento or 0) - (ingreso.dppp or 0)
-        )
         ingreso.save()
 
         # --- Registrar log ---
         MovimientoLog.objects.create(
+            usuario=request.user,
             tipo="añadir",
             periodo=periodo_final,
             columna=columna,
@@ -52,6 +77,7 @@ def index(request):
         id_registro = request.POST.get("id_registro")
         ingreso = get_object_or_404(IngresoMensual, id=id_registro)
         MovimientoLog.objects.create(
+            usuario=request.user,
             tipo="eliminar",
             periodo=ingreso.periodo,
             columna="N/A",
@@ -68,14 +94,11 @@ def index(request):
         nuevo_valor = Decimal(request.POST.get("nuevo_valor", 0))
         ingreso = get_object_or_404(IngresoMensual, id=id_registro)
         setattr(ingreso, columna, nuevo_valor)
-
-        ingreso.ingresos_netos_mantenimiento = (
-            (ingreso.ingresos_mantenimiento or 0) - (ingreso.dppp or 0)
-        )
         ingreso.save()
 
         # --- Registrar log ---
         MovimientoLog.objects.create(
+            usuario=request.user,
             tipo="editar",
             periodo=ingreso.periodo,
             columna=columna,
@@ -208,7 +231,7 @@ def index(request):
     return render(request, "finanzas/index.html", {
         "form": form,
         "mensaje": mensaje,
-        "registros": list(IngresoMensual.objects.all().values()),
+        "registros": registros,
         "registros_json": registros_json,
         "periodos": periodos,
         "total_mantenimiento": total_mantenimiento,
@@ -217,12 +240,37 @@ def index(request):
         "promedio_diferencia": promedio_diferencia,
     })
 
+@login_required
 def historial_movimientos(request):
-    movimientos = MovimientoLog.objects.all().order_by("-fecha")
+    movimientos = MovimientoLog.objects.select_related("usuario").all().order_by("-fecha")
 
     if request.method == "POST" and "eliminar_mov" in request.POST:
         mov_id = request.POST.get("id_mov")
         movimiento = get_object_or_404(MovimientoLog, id=mov_id)
+
+        # --- Ajustar el IngresoMensual solo si es tipo "añadir" ---
+        if movimiento.tipo == "añadir" and movimiento.columna and movimiento.monto:
+            try:
+                ingreso = IngresoMensual.objects.get(periodo=movimiento.periodo)
+                valor_actual = getattr(ingreso, movimiento.columna, 0) or 0
+                setattr(ingreso, movimiento.columna, max(valor_actual - movimiento.monto, 0))
+                
+                # Recalcular diferencia automáticamente
+                ingreso.ingresos_netos_mantenimiento = (
+                    (ingreso.ingresos_mantenimiento or 0) - (ingreso.dppp or 0)
+                )
+                ingreso.save()
+            except IngresoMensual.DoesNotExist:
+                pass  # No hay ingreso para ese periodo, no hacemos nada
+
+        # --- Registrar log en SystemLog ---
+        SystemLog.objects.create(
+            usuario=request.user,
+            accion="eliminar_movimiento",
+            detalle=f"El usuario {request.user.username} eliminó movimiento ID {mov_id} (Tipo: {movimiento.tipo}, Periodo: {movimiento.periodo})"
+        )
+
+        # --- Eliminar movimiento ---
         movimiento.delete()
         messages.success(request, "Movimiento eliminado correctamente.")
         return redirect("historial_movimientos")
@@ -230,3 +278,128 @@ def historial_movimientos(request):
     return render(request, "finanzas/historial_movimientos.html", {
         "movimientos": movimientos
     })
+
+
+@login_required
+def profile(request):
+    user = request.user
+    password_form = PasswordChangeForm(user=user)
+    profile_form = ProfileUpdateForm(instance=user)
+
+    if request.method == "POST":
+        if "update_profile" in request.POST:
+            profile_form = ProfileUpdateForm(request.POST, instance=user)
+            if profile_form.is_valid():
+                profile_form.save()
+                registrar_log(user, "Actualización de perfil", f"Correo actualizado a {profile_form.cleaned_data.get('email')}")
+                messages.success(request, "Perfil actualizado correctamente.")
+                return redirect("profile")
+
+        elif "change_password" in request.POST:
+            password_form = PasswordChangeForm(user=user, data=request.POST)
+            if password_form.is_valid():
+                password_form.save()
+                update_session_auth_hash(request, password_form.user)  # evita que cierre sesión
+                registrar_log(user, "Cambio de contraseña", "El usuario cambió su contraseña.")
+                messages.success(request, "Contraseña actualizada correctamente.")
+                return redirect("profile")
+
+    return render(
+        request,
+        "finanzas/profile.html",
+        {
+            "profile_form": profile_form,
+            "password_form": password_form,
+        },
+    )
+
+# --- ADMIN USERS ---
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def admin_users(request):
+    form = CustomUserCreationForm()
+
+    if request.method == "POST":
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            # Crear usuario
+            user = form.save(commit=False)
+            user.save()
+
+            # Registrar log de creación
+            registrar_log(request.user, "Creación de usuario", f"Se creó el usuario '{user.username}'.")
+
+            # Intentar enviar correo
+            try:
+                send_mail(
+                    subject="Datos de acceso - Panel Financiero",
+                    message=(
+                        f"Hola {user.username},\n\n"
+                        f"Tu cuenta ha sido creada exitosamente.\n\n"
+                        f"Usuario: {user.username}\n"
+                        f"Correo: {user.email}\n"
+                        f"Contraseña: (la que elegiste)\n\n"
+                        f"Por favor, cambia tu contraseña al ingresar."
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+                messages.success(request, f"Usuario '{user.username}' creado y correo enviado correctamente.")
+            except Exception as e:
+                messages.warning(request, f"Usuario '{user.username}' creado, pero no se pudo enviar el correo. ({e})")
+
+            # Limpiar formulario
+            form = CustomUserCreationForm()
+            return redirect("admin_users")
+
+        else:
+            # Cuando el formulario NO es válido, no existe 'user'
+            messages.error(request, "Error al crear el usuario. Revisa los campos.")
+            correo = form.cleaned_data.get("email", "sin email")
+            registrar_log(request.user, "Error al crear usuario", f"No se pudo crear el usuario con correo '{correo}'")
+
+    users = User.objects.all().order_by('-id')
+    return render(request, "finanzas/admin_users.html", {"form": form, "users": users})
+
+# --- ADMIN CONFIG ---
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def admin_config(request):
+    message = ""
+
+    if request.method == "POST":
+        nombre_sistema = request.POST.get("nombre_sistema")
+        moneda = request.POST.get("moneda")
+        email_soporte = request.POST.get("email_soporte")
+
+        # Aquí podrías guardar los valores en un modelo Configuracion o archivo JSON
+        message = f"✅ Configuración actualizada: {nombre_sistema}, moneda {moneda}, soporte {email_soporte}"
+
+    context = {
+        "message": message
+    }
+    return render(request, "finanzas/admin_config.html", context)
+
+
+# --- ADMIN LOGS ---
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def admin_logs(request):
+    movimientos = MovimientoLog.objects.select_related("usuario").all().order_by("-fecha")
+    logs = SystemLog.objects.select_related("usuario").all()
+
+    # Filtro opcional por usuario
+    usuario_filtro = request.GET.get("usuario")
+    if usuario_filtro:
+        logs = logs.filter(usuario__username__icontains=usuario_filtro)
+
+    return render(request, "finanzas/admin_logs.html", {
+        "logs": logs, 
+        "movimientos": movimientos,
+        "usuario_filtro": usuario_filtro
+        })
+
+def registrar_log(usuario, accion, detalle=""):
+    """Guarda una acción administrativa o de usuario en la tabla de logs."""
+    SystemLog.objects.create(usuario=usuario, accion=accion, detalle=detalle)

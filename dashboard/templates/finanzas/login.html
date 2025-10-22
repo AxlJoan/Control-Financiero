@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Iniciar sesión - Panel Financiero</title>
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Jost', sans-serif;
+      background: linear-gradient(to bottom, #1e3a8a, #2563eb, #3b82f6);
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .main {
+      width: 360px;
+      height: 480px;
+      background: #fff;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .main h1 {
+      color: #2563eb;
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 20px;
+    }
+
+    input {
+      width: 80%;
+      height: 40px;
+      background: #f1f5f9;
+      border: none;
+      border-radius: 6px;
+      margin: 10px 0;
+      padding: 0 12px;
+      outline: none;
+      font-size: 0.95rem;
+      transition: 0.2s;
+    }
+
+    input:focus {
+      box-shadow: 0 0 0 2px #2563eb;
+      background: #fff;
+    }
+
+    button {
+      width: 80%;
+      height: 45px;
+      margin-top: 20px;
+      color: #fff;
+      background: #2563eb;
+      font-size: 1em;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #1e3a8a;
+    }
+
+    .footer {
+      margin-top: 20px;
+      color: #64748b;
+      font-size: 0.9em;
+    }
+
+    .footer a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    .errorlist {
+      list-style: none;
+      padding: 0;
+      color: #dc2626;
+      font-size: 0.9rem;
+      margin: 0 0 10px 0;
+    }
+
+    /* 🌙 Modo oscuro */
+    body.dark-mode {
+      background: linear-gradient(to bottom, #0f172a, #1e293b, #334155);
+    }
+
+    .dark-mode .main {
+      background: #1f2937;
+      color: #e5e7eb;
+    }
+
+    .dark-mode .main h1 {
+      color: #93c5fd;
+    }
+
+    .dark-mode input {
+      background: #374151;
+      color: #e5e7eb;
+    }
+
+    .dark-mode input:focus {
+      box-shadow: 0 0 0 2px #93c5fd;
+      background: #111827;
+    }
+
+    .dark-mode button {
+      background: #4f46e5;
+    }
+
+    .dark-mode button:hover {
+      background: #4338ca;
+    }
+  </style>
+
+  <script>
+    // Detectar modo oscuro guardado
+    document.addEventListener("DOMContentLoaded", () => {
+      const isDark = localStorage.getItem("darkMode") === "true";
+      if (isDark) document.body.classList.add("dark-mode");
+    });
+  </script>
+</head>
+<body>
+  <div class="main">
+    <h1><i class="fa-solid fa-chart-line"></i> Panel Financiero</h1>
+
+    <form method="post">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      {% for field in form %}
+        {{ field.errors }}
+        {{ field }}
+      {% endfor %}
+      <button type="submit"><i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión</button>
+    </form>
+
+    <div class="footer">
+      <p>Control Financiero</p>
+    </div>
+  </div>
+</body>
+</html>

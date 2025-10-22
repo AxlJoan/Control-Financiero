@@ -1,366 +1,7 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>Panel Financiero</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-/* --------- ESTILO GENERAL --------- */
-:root {
-  --color-azul: #2563eb;
-  --color-azul-oscuro: #1e3a8a;
-  --color-fondo: #f9fafc;
-  --color-texto: #333;
-  --color-fondo-oscuro: #111827;
-  --color-card-oscuro: #1f2937;
-  --color-texto-oscuro: #e5e7eb;
-  --color-hover: #1e40af;
-}
-body {
-  font-family: "Segoe UI", sans-serif;
-  background-color: #f9fafc;
-  margin: 0;
-  padding: 0 30px;
-  color: #333;
-  transition: background 0.3s, color 0.3s;
-}
-h1, h2 {
-  color: #2563eb;
-  margin-bottom: 10px;
-}
-.dark-mode h1, h2 {
-  color: #93c5fd;
-  margin-bottom: 10px;
-}
-button {
-  background: #2563eb;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-button:hover {
-  background: #1d4ed8;
-}
-
-/* --------- MENÚ SUPERIOR --------- */
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: white;
-  padding: 15px 25px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  border-radius: 0 0 10px 10px;
-  margin-bottom: 25px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-.nav-links {
-  display: flex;
-  gap: 20px;
-}
-.nav-links a {
-  color: #2563eb;
-  font-weight: 500;
-  text-decoration: none;
-  position: relative;
-  transition: color 0.3s;
-}
-.nav-links a::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -4px;
-  width: 0%;
-  height: 2px;
-  background: #2563eb;
-  transition: width 0.3s;
-}
-.nav-links a:hover {
-  color: #1e40af;
-}
-.nav-links a:hover::after {
-  width: 100%;
-}
-.nav-links .sidebar-toggle {
-  background: none;
-  border: none;
-  color: #2563eb;
-  font-weight: 500;
-  cursor: pointer;
-  position: relative;
-  padding: 0;
-  font-size: 1rem;
-  transition: color 0.3s;
-}
-
-.nav-links .sidebar-toggle::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -4px;
-  width: 0%;
-  height: 2px;
-  background: #2563eb;
-  transition: width 0.3s;
-}
-
-.nav-links .sidebar-toggle:hover {
-  color: #1e40af;
-}
-
-.nav-links .sidebar-toggle:hover::after {
-  width: 100%;
-}
-
-/* Para modo oscuro */
-.dark-mode .nav-links .sidebar-toggle {
-  color: #93c5fd;
-}
-
-.dark-mode .nav-links .sidebar-toggle:hover {
-  color: #bfdbfe;
-}
-
-.dark-mode .nav-links .sidebar-toggle::after {
-  background: #93c5fd;
-}
-/* SIDEBAR */
-.sidebar {
-  width: 250px;
-  background: var(--color-azul-oscuro);
-  color: white;
-  position: fixed;
-  top: 0;
-  left: -250px;
-  height: 100vh;
-  padding-top: 60px;
-  transition: left 0.3s ease;
-  z-index: 100;
-}
-.sidebar.active { left: 0; }
-.sidebar h2 { text-align: center; margin-bottom: 20px; font-size: 1.3em; }
-.sidebar ul { list-style: none; padding: 0; }
-.sidebar ul li { padding: 12px 20px; }
-.sidebar ul li a { color: white; text-decoration: none; display: flex; align-items: center; gap: 12px; border-radius: 6px; transition: background 0.3s; }
-.sidebar ul li a:hover { background: var(--color-azul); }
-
-/* --------- TARJETAS KPI --------- */
-.kpi-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-  margin-bottom: 30px;
-}
-.kpi-card {
-  background: white;
-  flex: 1;
-  min-width: 200px;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  text-align: center;
-  transition: transform 0.2s;
-}
-.kpi-card:hover {
-  transform: translateY(-4px);
-}
-.kpi-card h3 {
-  font-size: 0.95rem;
-  color: #6b7280;
-}
-.kpi-card p {
-  font-size: 1.4rem;
-  color: #2563eb;
-  font-weight: bold;
-}
-
-/* --------- GRÁFICAS --------- */
-#graficas-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 30px;
-  justify-content: center;
-  margin-bottom: 40px;
-}
-
-/* --------- FORMULARIOS --------- */
-form {
-  background: white;
-  padding: 15px;
-  border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  margin-bottom: 20px;
-}
-select, input {
-  padding: 6px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  margin-right: 10px;
-}
-.toggle {
-  color: #2563eb;
-  cursor: pointer;
-  font-size: 0.9rem;
-  margin-left: 8px;
-}
-
-/* --------- TABLA --------- */
-.table-container {
-  width: 100%;
-  max-height: 70vh;
-  overflow-x: auto;
-  overflow-y: auto;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  background: white;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 1400px;
-}
-th, td {
-  padding: 6px 8px;
-  text-align: right;
-  border-bottom: 1px solid #ddd;
-  white-space: nowrap;
-}
-th {
-  background: #f1f5f9;
-  text-align: center;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-tr:hover {
-  background-color: #c2d9ff;
-}
-.dark-mode tr:hover {
-  background-color: #374151; 
-}
-
-/* --------- BOTONES EDITAR/ELIMINAR --------- */
-.btn-edit, .btn-delete {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  font-size: 1.1em;
-}
-.btn-edit i { color: #2563eb; }
-.btn-edit:hover i { color: #1e40af; }
-.btn-delete i { color: #dc2626; }
-.btn-delete:hover i { color: #991b1b; }
-
-/* --------- MODO OSCURO --------- */
-.dark-mode {
-  background-color: #111827;
-  color: #e5e7eb;
-}
-.dark-mode .navbar {
-  background: #1f2937;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-}
-.dark-mode .nav-links a {
-  color: #93c5fd;
-}
-.dark-mode form,
-.dark-mode .kpi-card,
-.dark-mode .table-container {
-  background: #1f2937;
-  border-color: #374151;
-}
-.dark-mode th {
-  background: #374151;
-  color: #e5e7eb;
-}
-.dark-mode button {
-  background: #4f46e5;
-}
-.dark-mode button:hover {
-  background: #4338ca;
-}
-.dark-mode .sidebar {
-  background: #1f2937;
-  color: var(--color-texto-oscuro);
-  box-shadow: 2px 0 8px rgba(0,0,0,0.5);
-}
-.dark-mode .sidebar ul li a { color: var(--color-texto-oscuro); }
-.dark-mode .sidebar ul li a:hover { background: #4f46e5; }
-</style>
-
-<script>
-// ---- Persistencia modo oscuro ----
-document.addEventListener("DOMContentLoaded", () => {
-  const body = document.body;
-  const saved = localStorage.getItem("darkMode");
-  const isDark = saved === "true";
-  
-  if (isDark) {
-    body.classList.add("dark-mode");
-    updateDarkModeButton(true);
-  }
-  
-  // Forzar actualización de gráficas después de un breve delay
-  setTimeout(() => {
-    window.dispatchEvent(new Event('resize'));
-  }, 100);
-});
-
-function toggleDarkMode() {
-  const body = document.body;
-  const isDark = body.classList.toggle("dark-mode");
-  
-  localStorage.setItem("darkMode", isDark);
-  updateDarkModeButton(isDark);
-  
-  // Disparar evento personalizado para que las gráficas se actualicen
-  window.dispatchEvent(new CustomEvent('darkModeToggle', { detail: isDark }));
-}
-
-function updateDarkModeButton(isDark) {
-  const button = document.querySelector('.dark-mode-toggle');
-  if (button) {
-    button.textContent = isDark ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
-    button.title = isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
-  }
-}
-</script>
-
-</head>
-<body>
+{% extends "finanzas/base.html" %}
+{% load static %}
+{% block content %}
 {% load humanize %}
-<!--  MENÚ SUPERIOR -->
-<div class="navbar">
-  <h1><i class="fa-solid fa-chart-line"></i> Panel Financiero</h1>
-  <div class="nav-links">
-    <a href="{% url 'historial_movimientos' %}"><i class="fa-solid fa-clock-rotate-left"></i> Historial de Movimientos</a>
-    <a href="#" onclick="toggleDarkMode()"><i class="fas fa-moon"></i> Modo Oscuro</a>
-    <!-- Botón del sidebar -->
-    <button class="sidebar-toggle" id="btnSidebar" style="display:flex; align-items:center; gap:6px;">
-      <i class="fas fa-bars"></i> Menú
-    </button>
-  </div>
-</div>
-
-<!-- SIDEBAR -->
-<div class="sidebar" id="sidebar">
-  <h2>Opciones</h2>
-  <ul>
-    <li><a href="#"><i class="fas fa-user"></i> Perfil</a></li>
-    <li><a href="#"><i class="fas fa-cog"></i> Configuración</a></li>
-    <li><a href="#"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>
-  </ul>
-</div>
 
 <!--  FILTROS  -->
 <!-- FILTROS --> <center> <form method="get" action=""> <label>Desde:</label> <select name="inicio"> <option value="">Todos</option> {% for p in periodos %} <option value="{{ p }}" {% if request.GET.inicio == p %}selected{% endif %}>{{ p }}</option> {% endfor %} </select> <label>Hasta:</label> <select name="fin"> <option value="">Todos</option> {% for p in periodos %} <option value="{{ p }}" {% if request.GET.fin == p %}selected{% endif %}>{{ p }}</option> {% endfor %} </select> <button type="submit">Filtrar</button> </form> </center>
@@ -657,6 +298,39 @@ function toggleForm() {
       <td>${{ r.total|floatformat:2|intcomma }}</td>
       <td>${{ r.ingresos_reales_vs_fact|floatformat:2|intcomma }}</td>
       <td>${{ r.diferencia_ingresos_fac_vs_cobrados|floatformat:2|intcomma }}</td>
+      <td>
+        <!-- Formulario editar -->
+        <form method="POST" style="display:inline;">
+          {% csrf_token %}
+          <input type="hidden" name="id_registro" value="{{ r.id }}">
+          <select name="columna" required>
+            <option value="ingresos_mantenimiento">Ingresos x Mant.</option>
+            <option value="dppp">DPPP</option>
+            <option value="ingresos_netos_mantenimiento">Ingresos Netos</option>
+            <option value="ingresos_cuota_extraordinaria">Ingreso x Cuota Extr.</option>
+            <option value="cuota_ordinaria_retroactiva">Cuota Retroactiva</option>
+            <option value="revision_csau">Revision CSAU</option>
+            <option value="depositos_garantia_obra">Depositos Garantía</option>
+            <option value="ingresos_intereses_cuotas">Ingresos Intereses</option>
+            <option value="ingresos_rendimiento_inversiones">Ingresos Rend. Inv.</option>
+            <option value="sanciones">Sanciones</option>
+            <option value="recuperacion_seguro_danios">Recuperación Seguro/Daños</option>
+            <option value="recuperacion_gastos_cobranza">Cobranza Legal</option>
+            <option value="depositos_no_identificados">Depositos No Identif.</option>
+          </select>
+          <input type="number" step="0.01" name="nuevo_valor" placeholder="Nuevo valor" required>
+          <button type="submit" name="editar" title="Editar"><i class="fas fa-edit"></i></button>
+        </form>
+
+        <!-- Formulario eliminar -->
+        <form method="POST" style="display:inline;">
+          {% csrf_token %}
+          <input type="hidden" name="id_registro" value="{{ r.id }}">
+          <button type="submit" name="eliminar" onclick="return confirm('¿Eliminar este registro?');" title="Eliminar">
+            <i class="fas fa-trash"></i>
+          </button>
+        </form>
+      </td>
     </tr>
     {% endfor %}
   </table>
@@ -692,6 +366,4 @@ document.addEventListener("keydown", (e) => {
   }
 });
 </script>
-
-</body>
-</html>
+{% endblock %}
