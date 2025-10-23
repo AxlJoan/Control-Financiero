@@ -182,7 +182,44 @@ button:hover {
   color: #2563eb;
   font-weight: bold;
 }
+/* Tooltip */
+.tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+  color: #9ecbff; /* color del ícono, puede dejarse igual */
+  font-weight: normal; /* antes estaba bold */
+  font-family: "Segoe UI", sans-serif; /* igual que el resto del dashboard */
+  font-size: 0.95rem; /* igual que h3, o ajusta según necesites */
+}
 
+.tooltip::after {
+  content: attr(data-tooltip);
+  visibility: hidden;
+  opacity: 0;
+  width: 260px;
+  background-color: #1f1f1f;
+  color: #fff;
+  text-align: left;
+  border-radius: 8px;
+  padding: 10px;
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  transition: opacity 0.25s;
+  font-size: 13px; /* mantiene un tamaño legible */
+  line-height: 1.4em;
+  font-weight: normal; /* igual que tooltip */
+  font-family: "Segoe UI", sans-serif;
+  z-index: 100;
+}
+
+.tooltip:hover::after {
+  visibility: visible;
+  opacity: 1;
+}
 /* --------- GRÁFICAS --------- */
 #graficas-container {
   display: flex;

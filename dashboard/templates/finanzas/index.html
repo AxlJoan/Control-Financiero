@@ -2,29 +2,37 @@
 {% load static %}
 {% block content %}
 {% load humanize %}
+<!-- Font Awesome 6 Free (CDN) -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
 
 <!--  FILTROS  -->
 <!-- FILTROS --> <center> <form method="get" action=""> <label>Desde:</label> <select name="inicio"> <option value="">Todos</option> {% for p in periodos %} <option value="{{ p }}" {% if request.GET.inicio == p %}selected{% endif %}>{{ p }}</option> {% endfor %} </select> <label>Hasta:</label> <select name="fin"> <option value="">Todos</option> {% for p in periodos %} <option value="{{ p }}" {% if request.GET.fin == p %}selected{% endif %}>{{ p }}</option> {% endfor %} </select> <button type="submit">Filtrar</button> </form> </center>
 <!-- 🔹 TARJETAS KPI -->
 <div class="kpi-container">
   <div class="kpi-card">
-    <h3>% DPPP sobre Ingresos</h3>
-    <p>{{ porcentaje_dppp|floatformat:2 }}%</p>
-  </div>
-  <div class="kpi-card">
-    <h3>Margen Neto Mantenimiento</h3>
-    <p>{{ margen_neto|floatformat:2 }}%</p>
-  </div>
-  <div class="kpi-card">
-    <h3>% Periodos con Déficit</h3>
+    <h3>% Periodos con Déficit 
+      <i class="fas fa-circle-info tooltip" data-tooltip="Indica el porcentaje de periodos donde los ingresos cobrados fueron menores a los facturados. 
+Fórmula: (Periodos con déficit / Total periodos) × 100. Entre más bajo sea, mejor consistencia."></i>
+    </h3>
     <p>{{ porcentaje_deficit|floatformat:1 }}%</p>
   </div>
+
   <div class="kpi-card">
-    <h3>Promedio Diferencia (Fact. vs Cobrado)</h3>
+    <h3>Déficit Acumulado 
+      <i class="fas fa-circle-info tooltip" data-tooltip="Suma total de todas las diferencias negativas entre lo facturado y lo cobrado. 
+Fórmula: Σ(diferencias negativas). Un valor alto indica pérdidas acumuladas."></i>
+    </h3>
+    <p>${{ deficit_acumulado|floatformat:2|intcomma }}</p>
+  </div>
+
+  <div class="kpi-card">
+    <h3>Promedio Diferencia (Fact. vs Cobrado)
+      <i class="fas fa-circle-info tooltip" data-tooltip="Promedio general de la diferencia entre ingresos facturados y cobrados. 
+Fórmula: Σ(Facturado - Cobrado) / N° de periodos. Cercano a 0 = equilibrio financiero."></i>
+    </h3>
     <p>${{ promedio_diferencia|floatformat:2|intcomma }}</p>
   </div>
 </div>
-
 
 <!-- 🔹 GRÁFICAS -->
 <div id="graficas-container">

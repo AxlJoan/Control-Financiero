@@ -151,7 +151,7 @@ def index(request):
                 r.ingresos_intereses_cuotas, r.ingresos_rendimiento_inversiones,
                 r.sanciones, r.recuperacion_seguro_danios,
                 r.recuperacion_gastos_cobranza, r.depositos_no_identificados,
-                r.total(), r.ingresos_reales_vs_fact, r.diferencia_ingresos_fac_vs_cobrados
+                r.total, r.ingresos_reales_vs_fact, r.diferencia_ingresos_fac_vs_cobrados
             ])
 
         # Fila de totales
@@ -216,34 +216,29 @@ def index(request):
     registros = list(registros_qs)
 
     # --- CÁLCULOS PARA TARJETAS KPI ---
-    total_mantenimiento = sum((r.ingresos_mantenimiento or Decimal(0)) for r in registros)
-    total_dppp = sum((r.dppp or Decimal(0)) for r in registros)
-    total_netos = sum((r.ingresos_netos_mantenimiento or Decimal(0)) for r in registros)
+    total_diferencia = sum((r.diferencia_ingresos_fac_vs_cobrados or Decimal(0)) for r in registros)
     promedio_diferencia = (
-        sum((r.diferencia_ingresos_fac_vs_cobrados or Decimal(0)) for r in registros) / len(registros)
+        total_diferencia / len(registros)
         if registros else Decimal(0)
     )
 
     # --- KPI NUEVOS ---
-    # 1️⃣ Porcentaje de DPPP sobre ingresos
-    porcentaje_dppp = (total_dppp / total_mantenimiento * 100) if total_mantenimiento else 0
-
-    # 2️⃣ Margen neto de mantenimiento
-    margen_neto = (total_netos / total_mantenimiento * 100) if total_mantenimiento else 0
-
-    # 3️⃣ Porcentaje de periodos con diferencia negativa
+    # 1 Porcentaje de periodos con diferencia negativa
     periodos_con_deficit = len([r for r in registros if (r.diferencia_ingresos_fac_vs_cobrados or 0) < 0])
     porcentaje_deficit = (periodos_con_deficit / len(registros) * 100) if registros else 0
 
+    # 2 Déficit acumulado total (solo periodos negativos)
+    deficit_acumulado = sum(
+        (r.diferencia_ingresos_fac_vs_cobrados or Decimal(0))
+        for r in registros
+        if (r.diferencia_ingresos_fac_vs_cobrados or 0) < 0
+    )
+
     context = {
         "registros": registros,
-        "total_mantenimiento": total_mantenimiento,
-        "total_dppp": total_dppp,
-        "total_netos": total_netos,
         "promedio_diferencia": promedio_diferencia,
-        "porcentaje_dppp": porcentaje_dppp,
-        "margen_neto": margen_neto,
         "porcentaje_deficit": porcentaje_deficit,
+        "deficit_acumulado": deficit_acumulado,
     }
     
     # Convierte registros en lista de diccionarios para el JS
