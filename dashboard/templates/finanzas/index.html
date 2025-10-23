@@ -8,16 +8,16 @@
 <!-- 🔹 TARJETAS KPI -->
 <div class="kpi-container">
   <div class="kpi-card">
-    <h3>Total Mantenimiento</h3>
-    <p>${{ total_mantenimiento|floatformat:2|intcomma }}</p>
+    <h3>% DPPP sobre Ingresos</h3>
+    <p>{{ porcentaje_dppp|floatformat:2 }}%</p>
   </div>
   <div class="kpi-card">
-    <h3>Total DPPP</h3>
-    <p>${{ total_dppp|floatformat:2|intcomma }}</p>
+    <h3>Margen Neto Mantenimiento</h3>
+    <p>{{ margen_neto|floatformat:2 }}%</p>
   </div>
   <div class="kpi-card">
-    <h3>Total Netos Mantenimiento</h3>
-    <p>${{ total_netos|floatformat:2|intcomma }}</p>
+    <h3>% Periodos con Déficit</h3>
+    <p>{{ porcentaje_deficit|floatformat:1 }}%</p>
   </div>
   <div class="kpi-card">
     <h3>Promedio Diferencia (Fact. vs Cobrado)</h3>

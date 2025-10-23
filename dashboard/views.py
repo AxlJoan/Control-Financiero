@@ -221,23 +221,40 @@ def index(request):
     total_netos = sum((r.ingresos_netos_mantenimiento or Decimal(0)) for r in registros)
     promedio_diferencia = (
         sum((r.diferencia_ingresos_fac_vs_cobrados or Decimal(0)) for r in registros) / len(registros)
-        if registros else 0
-)
+        if registros else Decimal(0)
+    )
+
+    # --- KPI NUEVOS ---
+    # 1️⃣ Porcentaje de DPPP sobre ingresos
+    porcentaje_dppp = (total_dppp / total_mantenimiento * 100) if total_mantenimiento else 0
+
+    # 2️⃣ Margen neto de mantenimiento
+    margen_neto = (total_netos / total_mantenimiento * 100) if total_mantenimiento else 0
+
+    # 3️⃣ Porcentaje de periodos con diferencia negativa
+    periodos_con_deficit = len([r for r in registros if (r.diferencia_ingresos_fac_vs_cobrados or 0) < 0])
+    porcentaje_deficit = (periodos_con_deficit / len(registros) * 100) if registros else 0
+
+    context = {
+        "registros": registros,
+        "total_mantenimiento": total_mantenimiento,
+        "total_dppp": total_dppp,
+        "total_netos": total_netos,
+        "promedio_diferencia": promedio_diferencia,
+        "porcentaje_dppp": porcentaje_dppp,
+        "margen_neto": margen_neto,
+        "porcentaje_deficit": porcentaje_deficit,
+    }
     
     # Convierte registros en lista de diccionarios para el JS
     registros_serializados = [model_to_dict(r) for r in registros]
     registros_json = json.dumps(registros_serializados, default=str)
 
-    return render(request, "finanzas/index.html", {
-        "form": form,
-        "mensaje": mensaje,
-        "registros": registros,
-        "registros_json": registros_json,
-        "periodos": periodos,
-        "total_mantenimiento": total_mantenimiento,
-        "total_dppp": total_dppp,
-        "total_netos": total_netos,
-        "promedio_diferencia": promedio_diferencia,
+    return render(request, "finanzas/index.html", context | {
+    "form": form,
+    "mensaje": mensaje,
+    "registros_json": registros_json,
+    "periodos": periodos,
     })
 
 @login_required
